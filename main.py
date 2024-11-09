@@ -33,8 +33,28 @@ class MarkdownProcessor:
                         text_lines.append(next_line.rstrip())
                         i += 1
 
-                # Combine short paragraphs
+                # Combine short paragraphs and merge with the next sections if content length is too short
                 heading_text = self.merge_short_paragraphs(text_lines).strip()
+                while len(heading_text) < 50:
+                    if i < len(lines):
+                        next_heading_match = re.match(r'###\s*(.*)', lines[i])
+                        if next_heading_match:
+                            next_heading = next_heading_match.group(1).strip()
+                            heading += ", " + next_heading
+                            i += 1  # Move to the line after the next heading
+                            while i < len(lines):
+                                next_line = lines[i]
+                                if re.match(r'#{1,6}\s', next_line):
+                                    break
+                                else:
+                                    text_lines.append(next_line.rstrip())
+                                    i += 1
+                            heading_text = self.merge_short_paragraphs(text_lines).strip()
+                        else:
+                            break
+                    else:
+                        break
+
                 if not heading_text:
                     heading_text = "No content under this heading."
                 self.headings.append((heading, heading_text))
@@ -72,7 +92,7 @@ class MarkdownProcessor:
         if self.headings:
             for heading, text in self.headings:
                 print(f"Third level heading: {heading}")
-                print("Text:")
+                print("Text:\n")
                 print(f"{text}\n")
         else:
             print("No level-3 headings or content to display.")
